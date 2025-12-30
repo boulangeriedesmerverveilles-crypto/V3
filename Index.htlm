@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>BDM — Feuille de temps</title>
+
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    :root{
+      --bg:#0b1220; --card:#0f172a; --muted:#94a3b8; --txt:#e2e8f0;
+      --acc:#22c55e; --acc2:#38bdf8; --warn:#f59e0b; --bad:#ef4444;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(180deg,#070b12,#0b1220 30%,#070b12);
+      color:var(--txt);
+    }
+    header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(10px);
+      background:rgba(11,18,32,.75);
+      border-bottom:1px solid rgba(148,163,184,.15);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:14px 14px 22px}
+    .topbar{display:flex; gap:10px; align-items:center; justify-content:space-between}
+    .brand{display:flex; gap:10px; align-items:center}
+    .logo{
+      width:40px;height:40px;border-radius:12px;
+      background:radial-gradient(circle at 30% 30%, rgba(34,197,94,.55), rgba(56,189,248,.25), rgba(15,23,42,1));
+      border:1px solid rgba(148,163,184,.18);
+    }
+    h1{font-size:16px;margin:0}
+    .sub{font-size:12px;color:var(--muted); margin:0}
+    .pill{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(148,163,184,.2); color:var(--muted);
+      display:inline-flex; gap:8px; align-items:center;
+      background:rgba(15,23,42,.5);
+    }
+    .pill b{color:var(--txt); font-weight:600}
+    main .grid{display:grid; gap:12px; grid-template-columns: 1.1fr .9fr}
+    @media (max-width:980px){ main .grid{grid-template-columns:1fr} }
+
+    .card{
+      background:rgba(15,23,42,.85);
+      border:1px solid rgba(148,163,184,.14);
+      border-radius:var(--radius);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(148,163,184,.12);
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+    }
+    .card .hd h2{font-size:14px;margin:0}
+    .card .hd p{margin:4px 0 0; font-size:12px; color:var(--muted)}
+    .card .bd{padding:14px}
+
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end}
+    .row > *{flex:1}
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    select,input,textarea,button{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,.18);
+      background:rgba(11,27,52,.75);
+      color:var(--txt);
+      outline:none;
+    }
+    input[type="month"]{padding:9px 10px}
+    textarea{min-height:86px; resize:vertical}
+    .hint{font-size:12px; color:var(--muted); margin-top:6px}
+
+    .btn{cursor:pointer; border:1px solid rgba(148,163,184,.18);
+      background:linear-gradient(180deg, rgba(34,197,94,.22), rgba(15,23,42,.85));}
+    .btn2{cursor:pointer; border:1px solid rgba(56,189,248,.22);
+      background:linear-gradient(180deg, rgba(56,189,248,.18), rgba(15,23,42,.85));}
+    .btn3{cursor:pointer; border:1px solid rgba(245,158,11,.22);
+      background:linear-gradient(180deg, rgba(245,158,11,.16), rgba(15,23,42,.85));}
+    .btnbad{cursor:pointer; border:1px solid rgba(239,68,68,.25);
+      background:linear-gradient(180deg, rgba(239,68,68,.16), rgba(15,23,42,.85));}
+    .actions{display:flex; gap:10px; flex-wrap:wrap}
+    .actions button{flex:1; min-width:160px}
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,.12);
+      background:rgba(11,27,52,.45);
+    }
+    thead th{
+      font-size:12px;
+      text-align:left;
+      color:var(--muted);
+      padding:10px 10px;
+      border-bottom:1px solid rgba(148,163,184,.12);
+      background:rgba(15,23,42,.65);
+      position:sticky; top:0;
+    }
+    tbody td{
+      padding:8px 8px;
+      border-bottom:1px solid rgba(148,163,184,.10);
+      vertical-align:top;
+    }
+    tbody tr:last-child td{border-bottom:none}
+    .daycell{min-width:120px}
+    .dow{display:block; color:var(--muted); font-size:11px}
+    .date{font-weight:650}
+    .inputs{display:grid; grid-template-columns:1fr 1fr; gap:6px;}
+    .inputs input, .inputs select{padding:8px 8px; border-radius:10px}
+    .mini{font-size:11px; color:var(--muted); margin-top:4px}
+    .tag{
+      display:inline-flex; gap:6px; align-items:center;
+      padding:4px 8px; border-radius:999px;
+      border:1px solid rgba(148,163,184,.16);
+      background:rgba(15,23,42,.5);
+      font-size:11px; color:var(--muted);
+      margin-right:6px;
+    }
+    .sumline{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      padding:12px; border-radius:14px;
+      border:1px solid rgba(148,163,184,.14);
+      background:rgba(15,23,42,.55);
+    }
+    .sumline b{font-size:18px}
+    .muted{color:var(--muted)}
+    .note{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px dashed rgba(148,163,184,.22);
+      background:rgba(11,27,52,.35);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    /* Grisé mercredi/jeudi */
+    tr.gray td{background:rgba(148,163,184,.06); opacity:.75;}
+    tr.gray .date{color:#cbd5e1}
+    tr.gray input, tr.gray select{background:rgba(11,27,52,.55);}
+
+    /* Signature */
+    .sigbox{
+      border:1px solid rgba(148,163,184,.18);
+      border-radius:14px;
+      overflow:hidden;
+      background:rgba(11,27,52,.45);
+    }
+    canvas{display:block; width:100%; height:160px; touch-action:none}
+    .sigbar{display:flex; gap:10px; padding:10px; border-top:1px solid rgba(148,163,184,.12)}
+    .sigbar button{flex:1}
+
+    @media print{
+      body{background:#fff;color:#111827}
+      header, .no-print{display:none !important}
+      .card{box-shadow:none;border:1px solid #e5e7eb;background:#fff}
+      table{background:#fff;border:1px solid #e5e7eb}
+      thead th{background:#f3f4f6;color:#111827; position:static}
+      tbody td{border-bottom:1px solid #e5e7eb}
+      tr.gray td{background:#f9fafb; opacity:1}
+      .muted, .note{color:#374151}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>BDM — Feuille de temps mensuelle</h1>
+          <p class="sub">Salarié : accès direct · Manager : code</p>
+        </div>
+      </div>
+      <div class="pill"><span>Session :</span> <b id="sessionMode">Salarié</b></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid">
+    <section class="card">
+      <div class="hd">
+        <div>
+          <h2>Pilotage</h2>
+          <p>Choix salarié + mois. Sauvegarde automatique (offline).</p>
+        </div>
+        <div class="pill"><span>Code manager :</span> <b>BDM2026</b></div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div>
+            <label>Mode</label>
+            <div class="actions">
+              <button class="btn2" id="btnEmployee">Salarié (sans code)</button>
+              <button class="btn3" id="btnManager">Manager (code)</button>
+            </div>
+            <div class="hint">Manager : retards visibles + contrôle.</div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <div>
+            <label>Salarié</label>
+            <select id="employeeSelect"></select>
+          </div>
+          <div>
+            <label>Mois</label>
+            <input type="month" id="monthInput" />
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <div>
+            <label>Commentaires (demandes / acomptes)</label>
+            <textarea id="comments" maxlength="250" placeholder="Ex: Demande d’acompte, changement planning, remarque… (250 max)"></textarea>
+            <div class="hint"><span id="commentCount">0</span>/250</div>
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <div>
+            <label>Signature mensuelle (salarié)</label>
+            <div class="sigbox">
+              <canvas id="sigCanvas"></canvas>
+              <div class="sigbar">
+                <button class="btnbad" id="sigClear">Effacer</button>
+                <button class="btn" id="sigSave">Valider signature</button>
+              </div>
+            </div>
+            <div class="hint">Signature au doigt. Intégrée au PDF.</div>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="sumline">
+          <div>
+            <div class="tag">Arrondi : 15 min</div>
+            <div class="tag">Mer/Jeu grisés</div>
+            <div class="tag">CFA = 7h</div>
+            <div class="tag">Offline</div>
+          </div>
+          <div style="text-align:right">
+            <div class="muted">Total heures du mois</div>
+            <b id="monthTotal">0,00</b>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="actions no-print">
+          <button class="btn" id="btnPdf">Générer PDF</button>
+          <button class="btn2" id="btnShare">Partager</button>
+          <button class="btn3" id="btnBackup">Backup JSON</button>
+          <button class="btnbad" id="btnResetMonth">Reset du mois</button>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="note">
+          iPhone : Générer PDF → Partager → Enregistrer dans Fichiers / WhatsApp / Mail.
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="hd">
+        <div>
+          <h2>Feuille mensuelle</h2>
+          <p>Heures libres + absences. Retards visibles uniquement manager.</p>
+        </div>
+        <div class="pill"><span>Auto-save :</span> <b>ON</b></div>
+      </div>
+      <div class="bd">
+        <div style="overflow:auto; max-height: 70vh">
+          <table>
+            <thead>
+              <tr>
+                <th class="daycell">Jour</th>
+                <th>Présence (matin / après-midi)</th>
+                <th>Absence</th>
+                <th>Heures +</th>
+                <th id="thRetard">Retard (min)</th>
+                <th>Total jour</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="note">
+          Règles : arrondi au quart d’heure · absence ≠ CFA : 0h · CFA : forfait 7h.
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const MANAGER_CODE = "BDM2026";
+  const CFA_MIN = 420; // 7h
+
+  const EMPLOYEES = [
+    "Mr Carletto Lorenzo",
+    "Mr Wloch Lukasz",
+    "Mr Leleu Maël",
+    "Mme Ibanez Raïna",
+    "Mme Antonini Alizée",
+    "Mme Coltel Sylvie",
+    "Mme Leleu Maeva"
+  ];
+
+  const ABSENCE = [
+    {v:"", t:"—"},
+    {v:"CA", t:"Congé annuel"},
+    {v:"AM", t:"Arrêt maladie"},
+    {v:"AI", t:"Absence injustifiée"},
+    {v:"CFA", t:"CFA / Formation (7h)"}
+  ];
+
+  const LS_PREFIX = "BDM_V1";
+  const $ = (id) => document.getElementById(id);
+
+  const sessionMode = $("sessionMode");
+  const employeeSelect = $("employeeSelect");
+  const monthInput = $("monthInput");
+  const tbody = $("tbody");
+  const monthTotal = $("monthTotal");
+  const comments = $("comments");
+  const commentCount = $("commentCount");
+  const thRetard = $("thRetard");
+
+  const btnEmployee = $("btnEmployee");
+  const btnManager = $("btnManager");
+  const btnPdf = $("btnPdf");
+  const btnShare = $("btnShare");
+  const btnBackup = $("btnBackup");
+  const btnResetMonth = $("btnResetMonth");
+
+  const sigCanvas = $("sigCanvas");
+  const sigClear = $("sigClear");
+  const sigSave = $("sigSave");
+
+  let isManager = false;
+  let sigDataUrl = "";
+  let days = [];
+  let data = {};
+
+  const pad2 = (n) => String(n).padStart(2,"0");
+  const formatHours = (h) => (Math.round(h*100)/100).toLocaleString("fr-FR",{minimumFractionDigits:2, maximumFractionDigits:2});
+  const ymKey = (employee, ym) => `${LS_PREFIX}::${employee}::${ym}`;
+
+  const roundToQuarter = (hhmm) => {
+    if(!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return hhmm;
+    const [H,M] = hhmm.split(":").map(Number);
+    const q = Math.round(M/15)*15;
+    let h = H, m = q;
+    if(m===60){ h=(h+1)%24; m=0; }
+    return `${pad2(h)}:${pad2(m)}`;
+  };
+
+  const minutesBetween = (start, end) => {
+    if(!start || !end) return 0;
+    if(!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) return 0;
+    const [sh,sm] = start.split(":").map(Number);
+    const [eh,em] = end.split(":").map(Number);
+    const s = sh*60+sm;
+    const e = eh*60+em;
+    const diff = e - s;
+    return diff > 0 ? diff : 0;
+  };
+
+  const dayName = (d) => ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][d];
+
+  const buildMonthDays = (ym) => {
+    const [Y,M] = ym.split("-").map(Number);
+    const last = new Date(Y, M, 0);
+    const out = [];
+    for(let day=1; day<=last.getDate(); day++){
+      const dt = new Date(Y, M-1, day);
+      const dow = dt.getDay();
+      out.push({
+        y:Y, m:M, d:day,
+        dow,
+        key: `${Y}-${pad2(M)}-${pad2(day)}`,
+        gray: (dow===3 || dow===4) // Mer/Jeu
+      });
+    }
+    return out;
+  };
+
+  const defaultDay = () => ({
+    amStart:"", amEnd:"",
+    pmStart:"", pmEnd:"",
+    absence:"",
+    extraMin:0,
+    retardMin:0
+  });
+
+  const load = () => {
+    const emp = employeeSelect.value;
+    const ym = monthInput.value;
+    const raw = localStorage.getItem(ymKey(emp, ym));
+    const obj = raw ? JSON.parse(raw) : null;
+
+    sigDataUrl = (obj && obj.signature) ? obj.signature : "";
+    comments.value = (obj && obj.comments) ? obj.comments : "";
+    commentCount.textContent = comments.value.length;
+    data = (obj && obj.days) ? obj.days : {};
+  };
+
+  const save = () => {
+    const emp = employeeSelect.value;
+    const ym = monthInput.value;
+    const payload = {
+      v:2,
+      employee: emp,
+      ym,
+      savedAt: new Date().toISOString(),
+      signature: sigDataUrl || "",
+      comments: comments.value || "",
+      days: data
+    };
+    localStorage.setItem(ymKey(emp, ym), JSON.stringify(payload));
+  };
+
+  const dayMinutes = (row) => {
+    if(row.absence === "CFA") return CFA_MIN; // CFA = 7h
+    if(row.absence) return 0;                // autres absences = 0h
+    return minutesBetween(row.amStart,row.amEnd) + minutesBetween(row.pmStart,row.pmEnd) + Number(row.extraMin||0);
+  };
+
+  const recalcTotals = () => {
+    let totalMin = 0;
+    for(const d of days){
+      const row = data[d.key] || defaultDay();
+      totalMin += dayMinutes(row);
+    }
+    monthTotal.textContent = formatHours(totalMin/60);
+  };
+
+  const applyAbsenceLock = (key, absenceValue) => {
+    const controls = tbody.querySelectorAll(`[data-k="${key}"]`);
+    controls.forEach(el => {
+      const f = el.getAttribute("data-f");
+      if(f === "absence") return;
+
+      if(absenceValue){
+        if(f === "retardMin" && isManager) el.disabled = false;
+        else el.disabled = true;
+      } else {
+        el.disabled = false;
+      }
+    });
+  };
+
+  const setDayTotal = (key) => {
+    const row = data[key] || defaultDay();
+    const mins = dayMinutes(row);
+    const el = $("tot-"+key);
+    if(el) el.textContent = formatHours(mins/60);
+  };
+
+  const render = () => {
+    days = buildMonthDays(monthInput.value);
+    tbody.innerHTML = "";
+
+    for(const d of days){
+      const row = data[d.key] || defaultDay();
+      const tr = document.createElement("tr");
+      if(d.gray) tr.classList.add("gray");
+
+      const tdDay = document.createElement("td");
+      tdDay.className="daycell";
+      tdDay.innerHTML = `<span class="date">${pad2(d.d)}/${pad2(d.m)}/${d.y}</span><span class="dow">${dayName(d.dow)}</span>`;
+      tr.appendChild(tdDay);
+
+      const tdPresence = document.createElement("td");
+      tdPresence.innerHTML = `
+        <div class="inputs">
+          <input type="time" data-k="${d.key}" data-f="amStart" value="${row.amStart}">
+          <input type="time" data-k="${d.key}" data-f="amEnd" value="${row.amEnd}">
+          <input type="time" data-k="${d.key}" data-f="pmStart" value="${row.pmStart}">
+          <input type="time" data-k="${d.key}" data-f="pmEnd" value="${row.pmEnd}">
+        </div>
+        <div class="mini">Matin (début/fin) · Après-midi (début/fin)</div>
+      `;
+      tr.appendChild(tdPresence);
+
+      const tdAbs = document.createElement("td");
+      const sel = document.createElement("select");
+      sel.setAttribute("data-k", d.key);
+      sel.setAttribute("data-f", "absence");
+      for(const a of ABSENCE){
+        const opt = document.createElement("option");
+        opt.value = a.v;
+        opt.textContent = a.t;
+        if(a.v === (row.absence||"")) opt.selected = true;
+        sel.appendChild(opt);
+      }
+      tdAbs.appendChild(sel);
+      tdAbs.insertAdjacentHTML("beforeend", `<div class="mini">CFA = 7h forfait</div>`);
+      tr.appendChild(tdAbs);
+
+      const tdExtra = document.createElement("td");
+      tdExtra.innerHTML = `
+        <input type="number" min="0" step="15" data-k="${d.key}" data-f="extraMin" value="${Number(row.extraMin||0)}" />
+        <div class="mini">Minutes (arrondi 15)</div>
+      `;
+      tr.appendChild(tdExtra);
+
+      const tdRet = document.createElement("td");
+      tdRet.innerHTML = `
+        <input type="number" min="0" step="5" data-k="${d.key}" data-f="retardMin" value="${Number(row.retardMin||0)}" />
+        <div class="mini">Visible manager</div>
+      `;
+      tdRet.style.display = isManager ? "" : "none";
+      tr.appendChild(tdRet);
+
+      const tdTot = document.createElement("td");
+      tdTot.innerHTML = `<b id="tot-${d.key}">0,00</b><div class="mini">heures</div>`;
+      tr.appendChild(tdTot);
+
+      tbody.appendChild(tr);
+      setDayTotal(d.key);
+      applyAbsenceLock(d.key, row.absence);
+    }
+
+    thRetard.style.display = isManager ? "" : "none";
+    recalcTotals();
+  };
+
+  const onAnyChange = (e) => {
+    const el = e.target;
+    const key = el.getAttribute("data-k");
+    const field = el.getAttribute("data-f");
+    if(!key || !field) return;
+
+    data[key] = data[key] || defaultDay();
+    let val = el.value;
+
+    if(el.type === "time"){
+      val = roundToQuarter(val);
+      el.value = val;
+    }
+
+    if(field === "extraMin" || field === "retardMin"){
+      val = Number(val || 0);
+      if(field === "extraMin"){
+        val = Math.max(0, Math.round(val/15)*15);
+        el.value = String(val);
+      } else {
+        val = Math.max(0, Math.round(val));
+        el.value = String(val);
+      }
+    }
+
+    data[key][field] = val;
+
+    if(field === "absence"){
+      applyAbsenceLock(key, val);
+    }
+
+    setDayTotal(key);
+    recalcTotals();
+    save();
+  };
+
+  comments.addEventListener("input", () => {
+    commentCount.textContent = comments.value.length;
+    save();
+  });
+
+  const setMode = (mode) => {
+    if(mode === "manager"){
+      const code = prompt("Code manager :");
+      if(code !== MANAGER_CODE){
+        alert("Code incorrect.");
+        return;
+      }
+      isManager = true;
+      sessionMode.textContent = "Manager";
+    } else {
+      isManager = false;
+      sessionMode.textContent = "Salarié";
+    }
+    render();
+  };
+
+  btnEmployee.addEventListener("click", () => setMode("employee"));
+  btnManager.addEventListener("click", () => setMode("manager"));
+
+  // PDF via impression + header injecté
+  let printHeaderEl = null;
+  const escapeHtml = (s) => String(s)
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+  const injectPrintHeader = () => {
+    const emp = employeeSelect.value;
+    const ym = monthInput.value;
+
+    const div = document.createElement("div");
+    div.style.padding = "14px";
+    div.style.marginBottom = "10px";
+    div.style.border = "1px solid #e5e7eb";
+    div.style.borderRadius = "12px";
+    div.style.background = "#fff";
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+        <div>
+          <div style="font-weight:800;font-size:16px;">BDM — Feuille de temps mensuelle</div>
+          <div style="color:#374151;font-size:12px;margin-top:2px;">
+            Salarié : <b>${escapeHtml(emp)}</b> · Mois : <b>${escapeHtml(ym)}</b>
+          </div>
+          <div style="color:#6b7280;font-size:11px;margin-top:6px;">
+            Export : ${new Date().toLocaleString("fr-FR")}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="color:#6b7280;font-size:11px;">Total mois</div>
+          <div style="font-weight:900;font-size:18px;">${escapeHtml(monthTotal.textContent)} h</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;color:#374151;font-size:12px;">
+        <b>Commentaires :</b> ${escapeHtml(comments.value || "—")}
+      </div>
+      <div style="margin-top:10px;display:flex;gap:12px;align-items:center;">
+        <div style="color:#6b7280;font-size:12px;min-width:90px;"><b>Signature :</b></div>
+        <div style="flex:1;border:1px solid #e5e7eb;border-radius:10px;min-height:60px;padding:6px;">
+          ${sigDataUrl ? `<img src="${sigDataUrl}" style="max-height:70px;max-width:100%;display:block;" />` : `<span style="color:#9ca3af;font-size:12px;">—</span>`}
+        </div>
+      </div>
+    `;
+    printHeaderEl = div;
+    document.querySelector("main").prepend(div);
+  };
+
+  const removePrintHeader = () => {
+    if(printHeaderEl){ printHeaderEl.remove(); printHeaderEl = null; }
+  };
+
+  btnPdf.addEventListener("click", () => {
+    injectPrintHeader();
+    window.print();
+    removePrintHeader();
+  });
+
+  btnShare.addEventListener("click", async () => {
+    try{
+      const emp = employeeSelect.value;
+      const ym = monthInput.value;
+      const text = `BDM — Feuille de temps ${emp} — ${ym}\nOuvre l’app et clique “Générer PDF”.`;
+      if(navigator.share) await navigator.share({ title:"BDM", text });
+      else { await navigator.clipboard.writeText(text); alert("Texte copié."); }
+    }catch(_){}
+  });
+
+  btnBackup.addEventListener("click", () => {
+    const emp = employeeSelect.value;
+    const ym = monthInput.value;
+    const raw = localStorage.getItem(ymKey(emp, ym)) || "{}";
+    const blob = new Blob([raw], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `BDM_${emp.replaceAll(" ","_")}_${ym}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  btnResetMonth.addEventListener("click", () => {
+    const emp = employeeSelect.value;
+    const ym = monthInput.value;
+    if(!confirm(`Reset complet pour ${emp} — ${ym} ?`)) return;
+    localStorage.removeItem(ymKey(emp, ym));
+    sigDataUrl = "";
+    comments.value = "";
+    commentCount.textContent = "0";
+    data = {};
+    render();
+    resizeCanvas();
+  });
+
+  // Signature
+  const resizeCanvas = () => {
+    const rect = sigCanvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    sigCanvas.width = Math.floor(rect.width * ratio);
+    sigCanvas.height = Math.floor(rect.height * ratio);
+    const ctx = sigCanvas.getContext("2d");
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(226,232,240,.95)";
+    ctx.clearRect(0,0,rect.width,rect.height);
+    if(sigDataUrl){
+      const img = new Image();
+      img.onload = () => { ctx.clearRect(0,0,rect.width,rect.height); ctx.drawImage(img,0,0,rect.width,rect.height); };
+      img.src = sigDataUrl;
+    }
+  };
+
+  let drawing=false, last=null;
+  const getPos = (ev) => {
+    const rect = sigCanvas.getBoundingClientRect();
+    const t = ev.touches ? ev.touches[0] : null;
+    return { x:(t?t.clientX:ev.clientX)-rect.left, y:(t?t.clientY:ev.clientY)-rect.top };
+  };
+  const startDraw = (ev) => { drawing=true; last=getPos(ev); };
+  const moveDraw = (ev) => {
+    if(!drawing) return;
+    ev.preventDefault();
+    const ctx = sigCanvas.getContext("2d");
+    const p = getPos(ev);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    last=p;
+  };
+  const endDraw = () => { drawing=false; last=null; };
+
+  sigCanvas.addEventListener("mousedown", startDraw);
+  sigCanvas.addEventListener("mousemove", moveDraw);
+  window.addEventListener("mouseup", endDraw);
+  sigCanvas.addEventListener("touchstart", startDraw, {passive:false});
+  sigCanvas.addEventListener("touchmove", moveDraw, {passive:false});
+  sigCanvas.addEventListener("touchend", endDraw);
+
+  sigClear.addEventListener("click", () => { sigDataUrl=""; resizeCanvas(); save(); });
+
+  sigSave.addEventListener("click", () => {
+    sigDataUrl = sigCanvas.toDataURL("image/png");
+    save();
+    alert("Signature validée.");
+  });
+
+  // Init
+  const init = () => {
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    }
+
+    employeeSelect.innerHTML = "";
+    for(const name of EMPLOYEES){
+      const opt = document.createElement("option");
+      opt.value = name; opt.textContent = name;
+      employeeSelect.appendChild(opt);
+    }
+
+    const now = new Date();
+    monthInput.value = `${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+
+    const lastEmp = localStorage.getItem(`${LS_PREFIX}::LAST_EMP`);
+    if(lastEmp && EMPLOYEES.includes(lastEmp)) employeeSelect.value = lastEmp;
+
+    employeeSelect.addEventListener("change", () => {
+      localStorage.setItem(`${LS_PREFIX}::LAST_EMP`, employeeSelect.value);
+      load(); render(); save(); resizeCanvas();
+    });
+
+    monthInput.addEventListener("change", () => { load(); render(); save(); resizeCanvas(); });
+
+    tbody.addEventListener("change", onAnyChange);
+    tbody.addEventListener("blur", onAnyChange, true);
+
+    load(); render(); resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+  };
+
+  init();
+})();
+</script>
+</body>
+</html>
