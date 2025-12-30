@@ -1,0 +1,14 @@
+{
+  "name": "BDM — Feuille de temps",
+  "short_name": "BDM",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0f172a",
+  "description": "Feuille de temps mensuelle (salarié/manager) — offline + PDF.",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
